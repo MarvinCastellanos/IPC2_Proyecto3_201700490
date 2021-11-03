@@ -1,6 +1,6 @@
 class Autorizacion:
-    def __init__(self):
-        self.fecha=''
+    def __init__(self,fecha):
+        self.fecha=fecha
         self.facturasRecibidas=0
         self.errores={'Nit_Emisor':0,'Nit_Receptor':0,'Iva':0,'Total':0,'Referencia_Duplicada':0}
         self.facturasCorrectas=0
