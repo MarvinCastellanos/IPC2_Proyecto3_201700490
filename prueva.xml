@@ -1,0 +1,57 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<SOLICITUD_AUTORIZACION>
+    <DTE>
+        <TIEMPO> Guatemala, 15/01/2021 15:25 hrs. </TIEMPO>
+        <REFERENCIA> A1990 </REFERENCIA>
+        <NIT_EMISOR> 7378106 </NIT_EMISOR>
+        <NIT_RECEPTOR> 8338817 </NIT_RECEPTOR>
+        <VALOR> 100.00 </VALOR>
+        <IVA> 12.00 </IVA>
+        <TOTAL> 112.00 </TOTAL>
+    </DTE>
+    <DTE>
+        <TIEMPO> Guatemala,15/01/2021 15:25 hrs. </TIEMPO>
+        <REFERENCIA> 121200G </REFERENCIA>
+        <NIT_EMISOR> 7378106 </NIT_EMISOR>
+        <NIT_RECEPTOR> 8338817 </NIT_RECEPTOR>
+        <VALOR> 519.20 </VALOR>
+        <IVA> 70.80 </IVA>
+        <TOTAL> 590.00 </TOTAL>
+    </DTE>
+    <DTE>
+        <TIEMPO> Guatemala, 16/01/2021 15:25 hrs. </TIEMPO>
+        <REFERENCIA> 23123123G0 </REFERENCIA>
+        <NIT_EMISOR> 7378106 </NIT_EMISOR>
+        <NIT_RECEPTOR> 8338817 </NIT_RECEPTOR>
+        <VALOR> 158.40 </VALOR>
+        <IVA> 21.60 </IVA>
+        <TOTAL> 180.00 </TOTAL>
+    </DTE>
+    <DTE>
+        <TIEMPO> Guatemala, 19/02/2021 15:25 hrs. </TIEMPO>
+        <REFERENCIA> 112233445566778899 </REFERENCIA>
+        <NIT_EMISOR> 7378106 </NIT_EMISOR>
+        <NIT_RECEPTOR> 8338817 </NIT_RECEPTOR>
+        <VALOR> 875.60 </VALOR>
+        <IVA> 119.40 </IVA>
+        <TOTAL> 995.00 </TOTAL>
+    </DTE>
+    <DTE>
+        <TIEMPO> Guatemala, 19/02/2021 15:25 hrs. </TIEMPO>
+        <REFERENCIA> MG210520 </REFERENCIA>
+        <NIT_EMISOR> 7378106 </NIT_EMISOR>
+        <NIT_RECEPTOR> 8338817 </NIT_RECEPTOR>
+        <VALOR> 246.84 </VALOR>
+        <IVA> 33.66 </IVA>
+        <TOTAL> 280.50 </TOTAL>
+    </DTE>
+    <DTE>
+        <TIEMPO> Guatemala, 19/02/2021 15:25 hrs. </TIEMPO>
+        <REFERENCIA> 19102012 </REFERENCIA>
+        <NIT_EMISOR> 7378106 </NIT_EMISOR>
+        <NIT_RECEPTOR> 8338817 </NIT_RECEPTOR>
+        <VALOR> 100.00 </VALOR>
+        <IVA> 12.00 </IVA>
+        <TOTAL> 112.00 </TOTAL>
+    </DTE> 
+</SOLICITUD_AUTORIZACION>
