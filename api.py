@@ -1,5 +1,8 @@
 import re
 import datetime
+from objetos import Autorizacion
+
+autorizaciones=[]
 
 def verificaFecha(tiempo):
     
