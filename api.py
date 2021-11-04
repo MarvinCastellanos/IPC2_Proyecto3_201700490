@@ -1,6 +1,7 @@
 from flask import Flask, Response, request
 from flask_cors import CORS
 from xml.etree import ElementTree as ET
+from xml.dom import minidom
 import re
 import datetime
 from objetos import Autorizacion
@@ -55,11 +56,11 @@ def verificaNit(nit):
 def verificaValor(valor):
     num=re.match('^[\d]+.?[\d]*$',valor)
     if num==None:
-        print('Valor Invalido')
+        return 0
     else:
         numero=float(num[0])
         numero=round(numero,2)
-        print(numero)
+        return(str(numero))
 
 def verificaIva(valor,iva):
     valor=float(valor)
@@ -77,29 +78,153 @@ def verificaTotal(valor, iva, total):
     iva=float(iva)
     total=float(total)
 
-    if total==valor+iva:
+    if round(total,2)==round(valor+iva,2):
         return total
     else:
         return 0
 
-def verificaReferencia(ref):
-    if len(ref)>40:
+def verificaReferencia(refe):
+    if len(refe)>40:
         return 0
     else:
         for ref in autorizaciones:
             for auto in ref.getlistadoAutorizaciones():
-                if auto['Referencia']==ref:
+                if auto['Referencia']==refe:
                     return 0
-        return ref
+        return str(refe)
+
+def generaXMLSalida():
+    document=minidom.Document()
+    root=document.createElement('LISTAAUTORIZACIONES')
+
+    for autoriza in autorizaciones:
+        autorizacion=document.createElement('AUTORIZACION')
+        #fecha
+        fecha=document.createElement('FECHA')
+        fecha.appendChild(document.createTextNode(autoriza.getFecha()))
+        autorizacion.appendChild(fecha) 
+        #facturas recividas
+        facReciv=document.createElement('FACTURAS_RECIBIDAS')
+        facReciv.appendChild(document.createTextNode(str(autoriza.getfacturasRecibidas())))
+        autorizacion.appendChild(facReciv)
+        #errores
+        errores=document.createElement('ERRORES')
+        NEmisor=document.createElement('NIT_EMISOR')
+        NEmisor.appendChild(document.createTextNode(str(autoriza.geterrores()['Nit_Emisor'])))
+        errores.appendChild(NEmisor)
+        #----------------
+        NReceptor=document.createElement('NIT_RECEPTOR')
+        NReceptor.appendChild(document.createTextNode(str(autoriza.geterrores()['Nit_Receptor'])))
+        errores.appendChild(NReceptor)
+        #----------------
+        EIva=document.createElement('IVA')
+        EIva.appendChild(document.createTextNode(str(autoriza.geterrores()['Iva'])))
+        errores.appendChild(EIva)
+        #----------------
+        ETotal=document.createElement('TOTAL')
+        ETotal.appendChild(document.createTextNode(str(autoriza.geterrores()['Total'])))
+        errores.appendChild(ETotal)
+        #----------------
+        RDuplicada=document.createElement('REFERENCIA_DUPLICADA')
+        RDuplicada.appendChild(document.createTextNode(str(autoriza.geterrores()['Referencia_Duplicada'])))
+        errores.appendChild(RDuplicada)
+        autorizacion.appendChild(errores)
+
+        #facturas correctas
+        facCorrectas=document.createElement('FACTURAS_CORRECTAS')
+        facCorrectas.appendChild(document.createTextNode(str(autoriza.getfacturasCorrectas())))
+        autorizacion.appendChild(facCorrectas)
+
+        #listado autorizaciones
+        LAutorizacion=document.createElement('LISTADO_AUTORIZACIONES')
+        for apr in autoriza.getlistadoAutorizaciones():
+            aprobacion=document.createElement('APROBACION')
+
+            NCEmisor=document.createElement('NIT_EMISOR')
+            NCEmisor.setAttribute('ref', str(apr['Referencia']))
+            NCEmisor.appendChild(document.createTextNode(str(apr['NitEmisor'])))
+            aprobacion.appendChild(NCEmisor)
+
+            NCReceptor=document.createElement('NIT_RECEPTOR')
+            NCReceptor.appendChild(document.createTextNode(str(apr['NitReceptor'])))
+            aprobacion.appendChild(NCReceptor)
+
+            CodAprobacion=document.createElement('CODIGO_APROBACION')
+            CodAprobacion.appendChild(document.createTextNode(str(apr['codigoAutorizacion'])))
+            aprobacion.appendChild(CodAprobacion)
+
+            ValorC=document.createElement('VALOR')
+            ValorC.appendChild(document.createTextNode(str(apr['valor'])))
+            aprobacion.appendChild(ValorC)
+
+            LAutorizacion.appendChild(aprobacion)
+
+            autorizacion.appendChild(LAutorizacion)
+
+        TAprobaciones=document.createElement('TOTAL_APROBACIONES')
+        TAprobaciones.appendChild(document.createTextNode(str(len(autoriza.getlistadoAutorizaciones()))))
+        LAutorizacion.appendChild(TAprobaciones)
+
+        root.appendChild(autorizacion)
+    xmlSalida=root.toprettyxml(indent='\t',encoding='utf8')
+    return xmlSalida
+
+def generaXMLFechaNit(fecha,nit):
+    document=minidom.Document()
+    root=document.createElement('FECHA')
+    root.setAttribute('fecha', fecha)
+
+    print(autorizaciones[0].getFecha()==fecha)
+    
+
+
+    for auto in autorizaciones:
+        autorizacion=document.createElement('AUTORIZACION')
+
+        if auto.getFecha()==fecha:
+            for dato in auto.getlistadoAutorizaciones():
+                if dato['NitEmisor']==nit:
+                    nit_=document.createElement('NIT')
+                    nit_.appendChild(document.createTextNode(nit))
+                    autorizacion.appendChild(nit_)
+
+                    ivaE_=document.createElement('IVAEMITIDO')
+                    ivaE_.appendChild(document.createTextNode(str(int(dato['valor'])*0.12)))
+                    autorizacion.appendChild(ivaE_)
+                    
+
+                elif dato['NitReceptor']==nit:
+                    nit_=document.createElement('NIT')
+                    nit_.appendChild(document.createTextNode(nit))
+                    autorizacion.appendChild(nit_)
+
+                    ivaR_=document.createElement('IVARECIBIDO')
+                    ivaR_.appendChild(document.createTextNode(str(int(dato['valor'])*0.12)))
+                    autorizacion.appendChild(ivaR_)
+            break
+        root.appendChild(autorizacion)
+    xmlSalida=root.toprettyxml(indent='\t',encoding='utf8')
+    return xmlSalida
+
 
 app=Flask(__name__)
 cors = CORS(app, resources={r"/*": {"origin": "*"}})
 
-@app.route('/datos',methods=['POST'])
+@app.route('/datos',methods=['GET'])
 def index():
     archivo= request.data.decode('utf8')
-    print(archivo)
     return str(archivo)
+
+@app.route('/fecha-nit', methods=['GET'])
+def ivaNit():
+    fecha = request.args.get('fecha')
+    nit = request.args.get('nit')
+
+    return generaXMLFechaNit(fecha,nit)
+    
+
+
+    return str(fecha)
 
 @app.route('/procesa', methods=['POST'])
 def proceso():
@@ -113,7 +238,7 @@ def proceso():
         referencia= verificaReferencia( child[1].text)
         nitEmisor= verificaNit(child[2].text) 
         nitReceptor= verificaNit(child[3].text) 
-        valor=child[4].text
+        valor=verificaValor(child[4].text)
         iva= verificaIva(valor,child[5].text) 
         total= verificaTotal(valor,iva,child[6].text) 
 
@@ -138,9 +263,8 @@ def proceso():
                                 if iva != 0:
                                     if total != 0:
                                         auto.sumaFacturasCorrectas()
-                                        auto.agregarAutorizacion({'NitEmisor':nitEmisor,'NitReceptor':nitReceptor,'Referencia':referencia,'valor':valor,'codigoAutorizacion':auto.getCorrelativo()})
+                                        auto.agregarAutorizacion({'NitEmisor':nitEmisor,'NitReceptor':nitReceptor,'Referencia':str(referencia),'valor':valor,'codigoAutorizacion':auto.getCorrelativo()})
                                         auto.sumaCorrelativo()
-                                        print(auto.getCorrelativo())
                                     else:
                                         auto.sumaErrorTotal()
                                 else:
@@ -174,8 +298,8 @@ def proceso():
                             auto.sumaErrorTotal()
                 else:
                     continue
-    print(len(autorizaciones))
-    return 'Datos cargados con exito'
+    
+    return generaXMLSalida()
 
 
 
