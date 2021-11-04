@@ -54,13 +54,14 @@ def verificaNit(nit):
             return 0
 
 def verificaValor(valor):
-    num=re.match('^[\d]+.?[\d]*$',valor)
+    num=re.findall('[\d]+.?[\d]*',valor)
     if num==None:
         return 0
     else:
+        print(num)
         numero=float(num[0])
         numero=round(numero,2)
-        return(str(numero))
+        return(float(numero))
 
 def verificaIva(valor,iva):
     valor=float(valor)
@@ -171,17 +172,12 @@ def generaXMLSalida():
 
 def generaXMLFechaNit(fecha,nit):
     document=minidom.Document()
-    root=document.createElement('FECHA')
+    root=document.createElement('FILTRO')
     root.setAttribute('fecha', fecha)
 
-    print(autorizaciones[0].getFecha()==fecha)
-    
-
-
     for auto in autorizaciones:
-        autorizacion=document.createElement('AUTORIZACION')
-
         if auto.getFecha()==fecha:
+            autorizacion=document.createElement('AUTORIZACION')
             for dato in auto.getlistadoAutorizaciones():
                 if dato['NitEmisor']==nit:
                     nit_=document.createElement('NIT')
@@ -189,9 +185,8 @@ def generaXMLFechaNit(fecha,nit):
                     autorizacion.appendChild(nit_)
 
                     ivaE_=document.createElement('IVAEMITIDO')
-                    ivaE_.appendChild(document.createTextNode(str(int(dato['valor'])*0.12)))
+                    ivaE_.appendChild(document.createTextNode(str(dato['valor']*0.12)))
                     autorizacion.appendChild(ivaE_)
-                    
 
                 elif dato['NitReceptor']==nit:
                     nit_=document.createElement('NIT')
@@ -201,8 +196,7 @@ def generaXMLFechaNit(fecha,nit):
                     ivaR_=document.createElement('IVARECIBIDO')
                     ivaR_.appendChild(document.createTextNode(str(int(dato['valor'])*0.12)))
                     autorizacion.appendChild(ivaR_)
-            break
-        root.appendChild(autorizacion)
+            root.appendChild(autorizacion)
     xmlSalida=root.toprettyxml(indent='\t',encoding='utf8')
     return xmlSalida
 
@@ -222,9 +216,6 @@ def ivaNit():
 
     return generaXMLFechaNit(fecha,nit)
     
-
-
-    return str(fecha)
 
 @app.route('/procesa', methods=['POST'])
 def proceso():
