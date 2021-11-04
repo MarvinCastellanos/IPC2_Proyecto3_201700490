@@ -1,3 +1,6 @@
+from flask import Flask, Response, request
+from flask_cors import CORS
+from xml.etree import ElementTree as ET
 import re
 import datetime
 from objetos import Autorizacion
@@ -13,16 +16,20 @@ def verificaFecha(tiempo):
         dia=fecha[0][0]+fecha[0][1]
         mes=fecha[0][3]+fecha[0][4]
         year=fecha[0][6]+fecha[0][7]+fecha[0][8]+fecha[0][9]
-        print(fecha)
+        #print(fecha)
+        correlativo=year+mes+dia
         try:
             fechaHora=datetime.datetime(int(year),int(mes),int(dia))
-            print('Fecha correcta')
+            #print('Fecha correcta')
+            return fecha[0],correlativo
         except ValueError:
             print('fecha Incorrecta')
         
 def verificaNit(nit):
+    nit=re.findall('\d+',nit)
+    nit=nit[0]
     if len(nit)>21:
-        print('nit invalido')
+        return 0
     else:
         nitA=''
         n=len(nit)
@@ -34,15 +41,16 @@ def verificaNit(nit):
                 nitA+=nit[n-1]
                 n=n-1
         sum=0
+        #print(nitA)
         for numero in range(len(nitA)):
             sum+=int(nitA[numero])*(numero+2)
         mod=sum%11
         modR=11-mod
         modMod=modR%11
         if modMod==int(nit[len(nit)-1]):
-            print('nit valido')
+            return nit
         else:
-            print('Nit invalido')
+            return 0
 
 def verificaValor(valor):
     num=re.match('^[\d]+.?[\d]*$',valor)
@@ -60,24 +68,116 @@ def verificaIva(valor,iva):
     ivaP=round(valor*0.12,2)
 
     if ivaP==iva:
-        print('iva correcto '+str(ivaP))
+        return iva
     else:
-        print('iva incorrecto '+str(ivaP))
+        return 0
 
-def verificaTotal(valor, iva, valorP):
+def verificaTotal(valor, iva, total):
     valor=float(valor)
     iva=float(iva)
-    valorP=float(valorP)
+    total=float(total)
 
-    if valorP==valor+iva:
-        print('valor correcto')
+    if total==valor+iva:
+        return total
     else:
-        print('valor Incorrecto')
+        return 0
 
 def verificaReferencia(ref):
     if len(ref)>40:
-        print('referencia invalida')
+        return 0
     else:
-        print('referencia valida')
+        for ref in autorizaciones:
+            for auto in ref.getlistadoAutorizaciones():
+                if auto['Referencia']==ref:
+                    return 0
+        return ref
 
-verificaNit('99990237')
+app=Flask(__name__)
+cors = CORS(app, resources={r"/*": {"origin": "*"}})
+
+@app.route('/datos',methods=['POST'])
+def index():
+    archivo= request.data.decode('utf8')
+    print(archivo)
+    return str(archivo)
+
+@app.route('/procesa', methods=['POST'])
+def proceso():
+    archivo=request.data.decode('utf-8')
+    root=ET.fromstring(archivo)
+    for child in root:
+        fecha1=verificaFecha(child[0].text)
+        if fecha1 != 0:
+            fecha=fecha1[0]
+            correlativo=fecha1[1]
+        referencia= verificaReferencia( child[1].text)
+        nitEmisor= verificaNit(child[2].text) 
+        nitReceptor= verificaNit(child[3].text) 
+        valor=child[4].text
+        iva= verificaIva(valor,child[5].text) 
+        total= verificaTotal(valor,iva,child[6].text) 
+
+        if len(autorizaciones)==0:
+            autorizaciones.append(Autorizacion(fecha,correlativo))
+        else:
+            n=1
+            for auto in autorizaciones:
+                if auto.getFecha()==fecha:
+                    break
+                else:
+                    if n==len(autorizaciones):
+                        autorizaciones.append(Autorizacion(fecha,correlativo))
+                        break
+                    n+=1
+            for auto in autorizaciones:
+                if auto.getFecha()==fecha:
+                    auto.sumaFacturasRecividas()
+                    if referencia != 0:
+                        if nitEmisor != 0:
+                            if nitReceptor != 0:
+                                if iva != 0:
+                                    if total != 0:
+                                        auto.sumaFacturasCorrectas()
+                                        auto.agregarAutorizacion({'NitEmisor':nitEmisor,'NitReceptor':nitReceptor,'Referencia':referencia,'valor':valor,'codigoAutorizacion':auto.getCorrelativo()})
+                                        auto.sumaCorrelativo()
+                                        print(auto.getCorrelativo())
+                                    else:
+                                        auto.sumaErrorTotal()
+                                else:
+                                    auto.sumaErrorIva()
+                                    if total==0:
+                                        auto.sumaErrorTotal()
+                            else:
+                                auto.sumaErrorNitReceptor()
+                                if iva==0:
+                                    auto.sumaErrorIva()
+                                if total==0:
+                                    auto.sumaErrorTotal()
+                        else:
+                            auto.sumaErrorNitEmisor()
+                            if nitReceptor==0:
+                                auto.sumaErrorNitReceptor()
+                            if iva==0:
+                                auto.sumaErrorIva()
+                            if total==0:
+                                auto.sumaErrorTotal()
+
+                    else:
+                        auto.sumaErrorReferenciaDuplicada()
+                        if nitEmisor==0:
+                            auto.sumaErrorNitEmisor()
+                        if nitReceptor==0:
+                            auto.sumaErrorNitReceptor()
+                        if iva==0:
+                            auto.sumaErrorIva()
+                        if total==0:
+                            auto.sumaErrorTotal()
+                else:
+                    continue
+    print(len(autorizaciones))
+    return 'Datos cargados con exito'
+
+
+
+if __name__=='__main__':
+    app.run(debug=True)

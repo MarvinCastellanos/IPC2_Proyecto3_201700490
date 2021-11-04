@@ -30,7 +30,7 @@
                 <a class="dropdown-item" data-toggle="modal" data-target="#" href="#">Consultar datos</a>
                 <a class="dropdown-item" data-toggle="modal" data-target="#FechaNit" href="#">Resumen de IVA por fecha y NIT</a>
                 <a class="dropdown-item" data-toggle="modal" data-target="#RangoFechas" href="#" >Resumen por rango de fechas</a>
-                <a class="dropdown-item" href="objetos.py">Reporte PDF</a>
+                <a class="dropdown-item" href="#">Reporte PDF</a>
               </div>
             </li>
             <li class="nav-item dropdown">
@@ -84,7 +84,7 @@
             </div>
             <div class="form-group">
               <label for="message-text" class="col-form-label">Fecha</label>
-              <input type="date" class="form-control" id="recipient-date"></textarea>
+              <input type="text" class="form-control" id="recipient-date"></textarea>
             </div>
           </form>
         </div>
@@ -109,11 +109,11 @@
           <form>
             <div class="form-group">
               <label for="recipient-name" class="col-form-label">Fecha inicio</label>
-              <input type="date" class="form-control" id="recipient-dateI">
+              <input type="text" class="form-control" id="recipient-dateI">
             </div>
             <div class="form-group">
               <label for="message-text" class="col-form-label">Fecha Fin</label>
-              <input type="date" class="form-control" id="recipient-DateF"></textarea>
+              <input type="text" class="form-control" id="recipient-DateF"></textarea>
               
             </div>
           </form>
@@ -136,19 +136,23 @@
           </button>
         </div>
         <div class="modal-body">
-          <form>
+          <form method="POST" enctype="multipart/form-data" action="/datos/">
+            {% csrf_token %}
             <div class="form-group">
               <label for="recipient-name" class="col-form-label">Selección de archivo</label>
-              <input type="file" class="form-control-file" id="exampleFormControlFile1">
+              <input type="file" name="document" class="form-control-file" id="exampleFormControlFile1">
             </div>
           </form>
         </div>
         <div class="modal-footer">
           <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancelar</button>
-          <button type="button" class="btn btn-primary">Enviar</button>
+          <input type="submit" type="button" class="btn btn-primary" value="Enviar">
         </div>
       </div>
     </div>
   </div>
+  <form action="#">
+    <textarea name="" id="" cols="30" rows="10">{{data}}</textarea>
+  </form>
 </body>
 </html>
